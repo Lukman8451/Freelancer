@@ -1,0 +1,2085 @@
+{
+    "info": {
+        "_postman_id": "freelancer-api-collection",
+        "name": "Freelancer Website API",
+        "description": "Complete API collection for Freelancer Marketplace Platform",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{jwt_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:5000/api",
+            "type": "string"
+        },
+        {
+            "key": "jwt_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "user_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "profile_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "project_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "proposal_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "contract_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "milestone_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "payment_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "skill_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "portfolio_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Health Check",
+            "item": [
+                {
+                    "name": "API Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/health",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        },
+                        "description": "Check if API is running"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "User Management",
+            "item": [
+                {
+                    "name": "Register User",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.user && jsonData.user.id) {",
+                                    "        pm.collectionVariables.set('user_id', jsonData.user.id);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"SecurePassword123\",\n    \"role\": \"freelancer\",\n    \"phone\": \"+1234567890\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/users/register",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "users",
+                                "register"
+                            ]
+                        },
+                        "description": "Register a new user account"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login User",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.token) {",
+                                    "        pm.collectionVariables.set('jwt_token', jsonData.token);",
+                                    "    }",
+                                    "    if (jsonData.user && jsonData.user.id) {",
+                                    "        pm.collectionVariables.set('user_id', jsonData.user.id);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"john@example.com\",\n    \"password\": \"SecurePassword123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/users/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "users",
+                                "login"
+                            ]
+                        },
+                        "description": "Login and get JWT token"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Current User Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "users",
+                                "profile"
+                            ]
+                        },
+                        "description": "Get current authenticated user's profile"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update User Profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"John Doe Updated\",\n    \"phone\": \"+1987654321\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/users/profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "users",
+                                "profile"
+                            ]
+                        },
+                        "description": "Update current user's profile"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Change Password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"currentPassword\": \"SecurePassword123\",\n    \"newPassword\": \"NewSecurePassword456\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/users/change-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "users",
+                                "change-password"
+                            ]
+                        },
+                        "description": "Change user password"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Users",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users?limit=50&offset=0&keyword=&orderBy=createdAt&sortBy=DESC",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "users"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "keyword",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "DESC"
+                                }
+                            ]
+                        },
+                        "description": "Get all users with pagination and filters (Admin only)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get User By ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "users",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "Get specific user by ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update User",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Updated Name\",\n    \"status\": \"active\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/users/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "users",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "Update user by ID (Admin only)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "users",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "Delete user by ID (Admin only)"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Profile Management",
+            "item": [
+                {
+                    "name": "Create Profile",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.profile && jsonData.profile.id) {",
+                                    "        pm.collectionVariables.set('profile_id', jsonData.profile.id);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"userId\": \"{{user_id}}\",\n    \"displayName\": \"John the Developer\",\n    \"bio\": \"Full-stack developer with 5 years of experience\",\n    \"hourlyRate\": 50,\n    \"location\": \"New York, USA\",\n    \"experienceLevel\": \"intermediate\",\n    \"profilePhoto\": \"https://example.com/photo.jpg\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/profiles",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "profiles"
+                            ]
+                        },
+                        "description": "Create a new profile"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Profiles",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/profiles?limit=50&offset=0&keyword=&orderBy=createdAt&sortBy=DESC",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "profiles"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "keyword",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "DESC"
+                                }
+                            ]
+                        },
+                        "description": "Get all profiles with pagination"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Profile By ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/profiles/{{profile_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "profiles",
+                                "{{profile_id}}"
+                            ]
+                        },
+                        "description": "Get profile by ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Profile By User ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/profiles/user/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "profiles",
+                                "user",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "Get profile by user ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Profiles Dropdown",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/profiles/dropdown",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "profiles",
+                                "dropdown"
+                            ]
+                        },
+                        "description": "Get profiles for dropdown"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"bio\": \"Updated bio content\",\n    \"hourlyRate\": 60,\n    \"experienceLevel\": \"expert\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/profiles/{{profile_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "profiles",
+                                "{{profile_id}}"
+                            ]
+                        },
+                        "description": "Update profile"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Profile",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/profiles/{{profile_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "profiles",
+                                "{{profile_id}}"
+                            ]
+                        },
+                        "description": "Delete profile"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Skill to Profile",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"profileId\": \"{{profile_id}}\",\n    \"skillId\": \"{{skill_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/profiles/skills/add",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "profiles",
+                                "skills",
+                                "add"
+                            ]
+                        },
+                        "description": "Add skill to profile"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Remove Skill from Profile",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"profileId\": \"{{profile_id}}\",\n    \"skillId\": \"{{skill_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/profiles/skills/remove",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "profiles",
+                                "skills",
+                                "remove"
+                            ]
+                        },
+                        "description": "Remove skill from profile"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Project Management",
+            "item": [
+                {
+                    "name": "Create Project",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.project && jsonData.project.id) {",
+                                    "        pm.collectionVariables.set('project_id', jsonData.project.id);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"E-commerce Website Development\",\n    \"description\": \"Looking for a skilled developer to build an e-commerce website with payment integration\",\n    \"budgetMin\": 1000,\n    \"budgetMax\": 3000\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/projects",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "projects"
+                            ]
+                        },
+                        "description": "Create a new project"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Projects",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/projects?limit=50&offset=0&keyword=&orderBy=createdAt&sortBy=DESC",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "projects"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "keyword",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "DESC"
+                                }
+                            ]
+                        },
+                        "description": "Get all projects"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Project By ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/projects/{{project_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "projects",
+                                "{{project_id}}"
+                            ]
+                        },
+                        "description": "Get project by ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Projects By Client",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/projects/client/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "projects",
+                                "client",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "Get all projects by client ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Projects By Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/projects/status/open",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "projects",
+                                "status",
+                                "open"
+                            ]
+                        },
+                        "description": "Get projects by status (open, in_progress, completed, cancelled)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Projects Dropdown",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/projects/dropdown",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "projects",
+                                "dropdown"
+                            ]
+                        },
+                        "description": "Get projects for dropdown"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Project",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"Updated Project Title\",\n    \"description\": \"Updated description\",\n    \"budgetMax\": 3500\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/projects/{{project_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "projects",
+                                "{{project_id}}"
+                            ]
+                        },
+                        "description": "Update project"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Project Status",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"in_progress\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/projects/{{project_id}}/status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "projects",
+                                "{{project_id}}",
+                                "status"
+                            ]
+                        },
+                        "description": "Update project status"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Project",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/projects/{{project_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "projects",
+                                "{{project_id}}"
+                            ]
+                        },
+                        "description": "Delete project"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Proposal Management",
+            "item": [
+                {
+                    "name": "Create Proposal",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.proposal && jsonData.proposal.id) {",
+                                    "        pm.collectionVariables.set('proposal_id', jsonData.proposal.id);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"projectId\": \"{{project_id}}\",\n    \"coverLetter\": \"I am interested in your project and have 5 years of experience...\",\n    \"bidAmount\": 2500,\n    \"durationInDays\": 30\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/proposals",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "proposals"
+                            ]
+                        },
+                        "description": "Create a new proposal"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Proposals",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/proposals?limit=50&offset=0&keyword=&orderBy=createdAt&sortBy=DESC",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "proposals"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "keyword",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "DESC"
+                                }
+                            ]
+                        },
+                        "description": "Get all proposals"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Proposal By ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/proposals/{{proposal_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "proposals",
+                                "{{proposal_id}}"
+                            ]
+                        },
+                        "description": "Get proposal by ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Proposals By Project",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/proposals/project/{{project_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "proposals",
+                                "project",
+                                "{{project_id}}"
+                            ]
+                        },
+                        "description": "Get all proposals for a project"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Proposals By Freelancer",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/proposals/freelancer/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "proposals",
+                                "freelancer",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "Get all proposals by freelancer"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Proposal",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"coverLetter\": \"Updated cover letter\",\n    \"bidAmount\": 2700\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/proposals/{{proposal_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "proposals",
+                                "{{proposal_id}}"
+                            ]
+                        },
+                        "description": "Update proposal"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Proposal Status",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"accepted\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/proposals/{{proposal_id}}/status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "proposals",
+                                "{{proposal_id}}",
+                                "status"
+                            ]
+                        },
+                        "description": "Accept or reject proposal (pending, accepted, rejected)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Proposal",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/proposals/{{proposal_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "proposals",
+                                "{{proposal_id}}"
+                            ]
+                        },
+                        "description": "Delete proposal"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Contract Management",
+            "item": [
+                {
+                    "name": "Create Contract",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.contract && jsonData.contract.id) {",
+                                    "        pm.collectionVariables.set('contract_id', jsonData.contract.id);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"projectId\": \"{{project_id}}\",\n    \"freelancerId\": \"{{user_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/contracts",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "contracts"
+                            ]
+                        },
+                        "description": "Create a new contract"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Contracts",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/contracts?limit=50&offset=0&orderBy=createdAt&sortBy=DESC",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "contracts"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "DESC"
+                                }
+                            ]
+                        },
+                        "description": "Get all contracts"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Contract By ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/contracts/{{contract_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "contracts",
+                                "{{contract_id}}"
+                            ]
+                        },
+                        "description": "Get contract by ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Contract By Project",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/contracts/project/{{project_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "contracts",
+                                "project",
+                                "{{project_id}}"
+                            ]
+                        },
+                        "description": "Get contract by project ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Contracts By Client",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/contracts/client/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "contracts",
+                                "client",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "Get all contracts for a client"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Contracts By Freelancer",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/contracts/freelancer/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "contracts",
+                                "freelancer",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "Get all contracts for a freelancer"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Contract",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"active\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/contracts/{{contract_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "contracts",
+                                "{{contract_id}}"
+                            ]
+                        },
+                        "description": "Update contract"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Contract Status",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"active\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/contracts/{{contract_id}}/status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "contracts",
+                                "{{contract_id}}",
+                                "status"
+                            ]
+                        },
+                        "description": "Update contract status (pending, active, completed, disputed)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Contract",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/contracts/{{contract_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "contracts",
+                                "{{contract_id}}"
+                            ]
+                        },
+                        "description": "Delete contract (Admin only)"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Milestone Management",
+            "item": [
+                {
+                    "name": "Create Milestone",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.milestone && jsonData.milestone.id) {",
+                                    "        pm.collectionVariables.set('milestone_id', jsonData.milestone.id);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"contractId\": \"{{contract_id}}\",\n    \"title\": \"Initial Setup and Design\",\n    \"amount\": 1000,\n    \"dueDate\": \"2024-12-31\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/milestones",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "milestones"
+                            ]
+                        },
+                        "description": "Create a new milestone"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Milestones",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/milestones?limit=50&offset=0&orderBy=createdAt&sortBy=DESC",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "milestones"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "DESC"
+                                }
+                            ]
+                        },
+                        "description": "Get all milestones"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Milestone By ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/milestones/{{milestone_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "milestones",
+                                "{{milestone_id}}"
+                            ]
+                        },
+                        "description": "Get milestone by ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Milestones By Contract",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/milestones/contract/{{contract_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "milestones",
+                                "contract",
+                                "{{contract_id}}"
+                            ]
+                        },
+                        "description": "Get all milestones for a contract"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Milestone",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"Updated Milestone Title\",\n    \"amount\": 1200\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/milestones/{{milestone_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "milestones",
+                                "{{milestone_id}}"
+                            ]
+                        },
+                        "description": "Update milestone"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Milestone Status",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"funded\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/milestones/{{milestone_id}}/status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "milestones",
+                                "{{milestone_id}}",
+                                "status"
+                            ]
+                        },
+                        "description": "Update milestone status (pending, funded, released)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Milestone",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/milestones/{{milestone_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "milestones",
+                                "{{milestone_id}}"
+                            ]
+                        },
+                        "description": "Delete milestone"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Payment Management",
+            "item": [
+                {
+                    "name": "Create Payment Order",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.paymentOrder && jsonData.paymentOrder.id) {",
+                                    "        pm.collectionVariables.set('payment_id', jsonData.paymentOrder.id);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"milestoneId\": \"{{milestone_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/payments",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "payments"
+                            ]
+                        },
+                        "description": "Create a new payment order (initiates Razorpay order)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Payment Orders",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/payments?limit=50&offset=0&orderBy=createdAt&sortBy=DESC",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "payments"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "DESC"
+                                }
+                            ]
+                        },
+                        "description": "Get all payment orders"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Payment Order By ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/payments/{{payment_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "{{payment_id}}"
+                            ]
+                        },
+                        "description": "Get payment order by ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Payment Orders By User",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/payments/user/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "user",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "Get all payment orders for a user"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Payment Status (Webhook)",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"razorpayOrderId\": \"order_xyz123\",\n    \"status\": \"paid\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/payments/status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "status"
+                            ]
+                        },
+                        "description": "Update payment status (typically called by Razorpay webhook)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Payment Order",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/payments/{{payment_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "{{payment_id}}"
+                            ]
+                        },
+                        "description": "Delete payment order (Admin only)"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Skill Management",
+            "item": [
+                {
+                    "name": "Create Skill",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.skill && jsonData.skill.id) {",
+                                    "        pm.collectionVariables.set('skill_id', jsonData.skill.id);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"JavaScript\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/skills",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "skills"
+                            ]
+                        },
+                        "description": "Create a new skill"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Skills",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/skills?limit=50&offset=0&keyword=&orderBy=name&sortBy=ASC",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "skills"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "keyword",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "name"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "ASC"
+                                }
+                            ]
+                        },
+                        "description": "Get all skills"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Skill By ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/skills/{{skill_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "skills",
+                                "{{skill_id}}"
+                            ]
+                        },
+                        "description": "Get skill by ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Skills Dropdown",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/skills/dropdown",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "skills",
+                                "dropdown"
+                            ]
+                        },
+                        "description": "Get skills for dropdown"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Skill",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"JavaScript ES6+\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/skills/{{skill_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "skills",
+                                "{{skill_id}}"
+                            ]
+                        },
+                        "description": "Update skill"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Skill",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/skills/{{skill_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "skills",
+                                "{{skill_id}}"
+                            ]
+                        },
+                        "description": "Delete skill (Admin only)"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Portfolio Management",
+            "item": [
+                {
+                    "name": "Create Portfolio Item",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    if (jsonData.portfolioItem && jsonData.portfolioItem.id) {",
+                                    "        pm.collectionVariables.set('portfolio_id', jsonData.portfolioItem.id);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"profileId\": \"{{profile_id}}\",\n    \"title\": \"E-commerce Mobile App\",\n    \"description\": \"Built a complete e-commerce mobile app using React Native\",\n    \"imageUrl\": \"https://example.com/portfolio1.jpg\",\n    \"projectUrl\": \"https://github.com/username/project\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/portfolio",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "portfolio"
+                            ]
+                        },
+                        "description": "Create a new portfolio item"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Bulk Create Portfolio Items",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"profileId\": \"{{profile_id}}\",\n    \"portfolioItems\": [\n        {\n            \"title\": \"Project 1\",\n            \"description\": \"Description 1\",\n            \"imageUrl\": \"https://example.com/img1.jpg\"\n        },\n        {\n            \"title\": \"Project 2\",\n            \"description\": \"Description 2\",\n            \"imageUrl\": \"https://example.com/img2.jpg\"\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/portfolio/bulk",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "portfolio",
+                                "bulk"
+                            ]
+                        },
+                        "description": "Bulk create portfolio items"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Portfolio Items",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/portfolio?limit=50&offset=0&keyword=&orderBy=createdAt&sortBy=DESC",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "portfolio"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "keyword",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "DESC"
+                                }
+                            ]
+                        },
+                        "description": "Get all portfolio items"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Portfolio Item By ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/portfolio/{{portfolio_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "portfolio",
+                                "{{portfolio_id}}"
+                            ]
+                        },
+                        "description": "Get portfolio item by ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Portfolio Items By Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/portfolio/profile/{{profile_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "portfolio",
+                                "profile",
+                                "{{profile_id}}"
+                            ]
+                        },
+                        "description": "Get all portfolio items for a profile"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Portfolio Item",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"Updated Portfolio Item\",\n    \"description\": \"Updated description\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/portfolio/{{portfolio_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "portfolio",
+                                "{{portfolio_id}}"
+                            ]
+                        },
+                        "description": "Update portfolio item"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Portfolio Item",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/portfolio/{{portfolio_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "portfolio",
+                                "{{portfolio_id}}"
+                            ]
+                        },
+                        "description": "Delete portfolio item"
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}
