@@ -13,6 +13,10 @@ export const env = {
   JWT_SECRET: process.env.JWT_SECRET || process.env.jwt_secret || "lukman",
   RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || "",
   RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || "",
+  // Razorpay X Configuration (for payouts to freelancers)
+  RAZORPAY_X_KEY_ID: process.env.RAZORPAY_X_KEY_ID || "",
+  RAZORPAY_X_KEY_SECRET: process.env.RAZORPAY_X_KEY_SECRET || "",
+  RAZORPAY_X_ACCOUNT_NUMBER: process.env.RAZORPAY_X_ACCOUNT_NUMBER || "",
   SERVER_URL: process.env.SERVER_URL || process.env.server || "http://localhost:5000"
 };
 

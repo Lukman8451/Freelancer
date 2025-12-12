@@ -3,6 +3,7 @@ import { sequelize } from "../model/index.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { env } from "../config/config.js";
+import { resetFailedLoginAttempts, incrementFailedLoginAttempts } from "../middlewares/rateLimiter.js";
 
 class UserController {
     // Register a new user
@@ -112,19 +113,28 @@ class UserController {
             // Find user
             const user = await UserService.login(email);
             if (!user) {
-                return res.status(401).json({ error: "Invalid email or password" });
+                // Increment failed login attempts
+                incrementFailedLoginAttempts(req);
+                return res.status(404).json({ error: "User not found. Please check your email address or sign up to create an account." });
             }
 
             // Check if user is active
             if (user.status !== "active") {
+                // Increment failed login attempts
+                incrementFailedLoginAttempts(req);
                 return res.status(401).json({ error: "Account is blocked. Please contact support" });
             }
 
             // Verify password
             const isValidPassword = await bcrypt.compare(password, user.passwordHash);
             if (!isValidPassword) {
-                return res.status(401).json({ error: "Invalid email or password" });
+                // Increment failed login attempts
+                incrementFailedLoginAttempts(req);
+                return res.status(401).json({ error: "Password is incorrect. Please try again." });
             }
+
+            // SUCCESSFUL LOGIN - Reset failed attempts counter
+            resetFailedLoginAttempts(req);
 
             // Generate JWT token
             const token = jwt.sign(

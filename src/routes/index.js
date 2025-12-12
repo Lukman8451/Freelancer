@@ -8,6 +8,7 @@ import { MilestoneRouter } from './MilestoneRoutes.js';
 import { PaymentOrderRouter } from './PaymentOrderRoutes.js';
 import { SkillRouter } from './SkillRoutes.js';
 import { PortfolioItemRouter } from './PortfolioItemRoutes.js';
+import WalletRouter from './WalletRoutes.js';
 
 const router = express.Router();
 
@@ -30,6 +31,7 @@ router.use('/', MilestoneRouter);
 router.use('/', PaymentOrderRouter);
 router.use('/', SkillRouter);
 router.use('/', PortfolioItemRouter);
+router.use('/', WalletRouter);
 
 export default router;
 

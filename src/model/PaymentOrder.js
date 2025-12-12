@@ -33,6 +33,39 @@ const PaymentOrder = sequelize.define("PaymentOrders", {
         defaultValue: "created",
         allowNull: false
     },
+    // Payout/Transfer tracking
+    razorpayPayoutId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "Razorpay payout ID for transfer to freelancer"
+    },
+    payoutStatus: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "Status of payout to freelancer (pending, processing, processed, failed)",
+        validate: {
+            isIn: {
+                args: [['pending', 'processing', 'processed', 'failed']],
+                msg: "Payout status must be one of: pending, processing, processed, failed"
+            }
+        }
+    },
+    payoutAmount: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+        comment: "Amount transferred to freelancer (after platform fee)"
+    },
+    platformFee: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+        comment: "Platform fee amount (1% of milestone amount)"
+    },
+    platformFeePercentage: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+        defaultValue: 1.0,
+        comment: "Platform fee percentage (default 1%)"
+    },
     createdAt: {
         type: DataTypes.DATE,
         defaultValue: sequelize.fn("now"),

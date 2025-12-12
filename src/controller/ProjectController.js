@@ -168,9 +168,13 @@ class ProjectController {
                 return res.status(404).json({ error: "Project not found" });
             }
 
-            // Check if user owns the project or is admin
-            if (project.clientId !== req.user.id && req.user.role !== "admin") {
-                return res.status(403).json({ error: "Forbidden. You can only update your own projects" });
+            // Check if user owns the project or is admin or is assigned freelancer
+            const isOwner = project.clientId === req.user.id;
+            const isFreelancer = project.assignedFreelancerId === req.user.id;
+            const isAdmin = req.user.role === "admin";
+            
+            if (!isOwner && !isFreelancer && !isAdmin) {
+                return res.status(403).json({ error: "Forbidden. You can only update projects you own or are assigned to" });
             }
 
             const result = await ProjectService.updateProject(id, updateData);
@@ -229,6 +233,59 @@ class ProjectController {
             console.error("Update project status error:", error);
             return res.status(500).json({
                 error: "Failed to update project status",
+                details: error.message
+            });
+        }
+    };
+
+    // Update project progress
+    updateProjectProgress = async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { progressPercentage, progressNotes } = req.body;
+
+            // Check if project exists
+            const project = await ProjectService.getProjectById(id);
+            if (!project) {
+                return res.status(404).json({ error: "Project not found" });
+            }
+
+            // Only assigned freelancer can update progress
+            if (project.assignedFreelancerId !== req.user.id && req.user.role !== "admin") {
+                return res.status(403).json({ error: "Forbidden. Only assigned freelancer can update progress" });
+            }
+
+            // Validate progress percentage
+            if (progressPercentage !== undefined) {
+                const progress = parseInt(progressPercentage);
+                if (isNaN(progress) || progress < 0 || progress > 100) {
+                    return res.status(400).json({ error: "Progress percentage must be between 0 and 100" });
+                }
+            }
+
+            const updateData = {
+                lastProgressUpdate: new Date()
+            };
+
+            if (progressPercentage !== undefined) {
+                updateData.progressPercentage = progressPercentage;
+            }
+
+            if (progressNotes) {
+                updateData.progressNotes = progressNotes;
+            }
+
+            await ProjectService.updateProject(id, updateData);
+            const updatedProject = await ProjectService.getProjectById(id);
+
+            return res.status(200).json({
+                message: "Project progress updated successfully",
+                project: updatedProject
+            });
+        } catch (error) {
+            console.error("Update project progress error:", error);
+            return res.status(500).json({
+                error: "Failed to update project progress",
                 details: error.message
             });
         }

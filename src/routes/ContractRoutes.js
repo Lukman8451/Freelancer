@@ -54,6 +54,12 @@ ContractRouter.put(
   contractController.updateContractStatus
 );
 
+ContractRouter.get(
+  "/contracts/:id/payment-summary",
+  isAuthenticated,
+  contractController.getContractPaymentSummary
+);
+
 ContractRouter.delete(
   "/contracts/:id",
   isAuthenticated,

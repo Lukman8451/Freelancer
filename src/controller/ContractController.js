@@ -237,6 +237,45 @@ class ContractController {
         }
     };
 
+    // Get contract payment summary
+    getContractPaymentSummary = async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!id) {
+                return res.status(400).json({ error: "Contract ID is required" });
+            }
+
+            const contract = await ContractService.getContractById(id);
+            if (!contract) {
+                return res.status(404).json({ error: "Contract not found" });
+            }
+
+            // Get all milestones for this contract
+            const milestones = await ContractService.getMilestonesByContractId(id);
+            const milestonesList = milestones || [];
+            
+            const totalAmount = contract.totalAmount || 0;
+            const paidAmount = milestonesList
+                .filter(m => m.status === 'funded' || m.status === 'released')
+                .reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0);
+            const remainingAmount = Math.max(0, totalAmount - paidAmount);
+
+            return res.status(200).json({
+                totalAmount,
+                paidAmount,
+                remainingAmount,
+                milestonesCount: milestonesList.length
+            });
+        } catch (error) {
+            console.error("Get contract payment summary error:", error);
+            return res.status(500).json({
+                error: "Failed to fetch payment summary",
+                details: error.message
+            });
+        }
+    };
+
     // Update contract status
     updateContractStatus = async (req, res) => {
         try {

@@ -1,5 +1,6 @@
 import ProposalService from "../service/concrete/ProposalService.js";
 import ProjectService from "../service/concrete/ProjectService.js";
+import ContractService from "../service/concrete/ContractService.js";
 import { sequelize } from "../model/index.js";
 
 class ProposalController {
@@ -26,6 +27,14 @@ class ProposalController {
             if (project.status !== "open") {
                 await transaction.rollback();
                 return res.status(400).json({ error: "Project is not open for proposals" });
+            }
+
+            // Check for duplicate proposals
+            const existingProposals = await ProposalService.getProposalsByProjectId(projectId);
+            const userProposal = existingProposals.find(p => p.freelancerId === (freelancerId || req.user.id));
+            if (userProposal) {
+                await transaction.rollback();
+                return res.status(400).json({ error: "You have already submitted a proposal for this project" });
             }
 
             const proposal = await ProposalService.create({
@@ -237,6 +246,37 @@ class ProposalController {
             const result = await ProposalService.updateProposalStatus(id, status);
             if (!result || result[0] === 0) {
                 return res.status(404).json({ error: "Proposal not found" });
+            }
+
+            // If proposal is accepted, change project status to "in_progress", create contract, and reject other proposals
+            if (status === "accepted") {
+                // Update project status and assign freelancer
+                await ProjectService.updateProject(proposal.projectId, { 
+                    status: "in_progress",
+                    assignedFreelancerId: proposal.freelancerId,
+                    lastProgressUpdate: new Date()
+                });
+                
+                // Check if contract already exists
+                const existingContract = await ContractService.getContractByProjectId(proposal.projectId);
+                if (!existingContract) {
+                    // Create contract automatically with total amount from proposal
+                    await ContractService.create({
+                        projectId: proposal.projectId,
+                        clientId: project.clientId,
+                        freelancerId: proposal.freelancerId,
+                        totalAmount: proposal.bidAmount, // Set total amount from accepted proposal
+                        status: "active"
+                    });
+                }
+                
+                // Reject all other pending proposals for this project
+                const allProposals = await ProposalService.getProposalsByProjectId(proposal.projectId);
+                for (const otherProposal of allProposals) {
+                    if (otherProposal.id !== id && otherProposal.status === "pending") {
+                        await ProposalService.updateProposalStatus(otherProposal.id, "rejected");
+                    }
+                }
             }
 
             return res.status(200).json({ message: `Proposal ${status} successfully` });

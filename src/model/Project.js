@@ -32,6 +32,27 @@ const Project = sequelize.define("Projects", {
         defaultValue: "open",
         allowNull: false
     },
+    assignedFreelancerId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+    },
+    progressPercentage: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        allowNull: false,
+        validate: {
+            min: 0,
+            max: 100
+        }
+    },
+    progressNotes: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+    },
+    lastProgressUpdate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
     createdAt: {
         type: DataTypes.DATE,
         defaultValue: sequelize.fn("now"),
@@ -52,6 +73,13 @@ Project.associate = function () {
         onDelete: "SET NULL",
         onUpdate: "CASCADE",
         allowNull: false
+    });
+    Project.belongsTo(models.Users, {
+        foreignKey: "assignedFreelancerId",
+        as: "assignedFreelancer",
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
+        allowNull: true
     });
     Project.hasMany(models.Proposals, {
         foreignKey: "projectId",

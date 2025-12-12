@@ -16,7 +16,7 @@ const requestStore = new Map();
 function createRateLimiter(options = {}) {
     const {
         windowMs = 15 * 60 * 1000, // 15 minutes
-        maxRequests = 5,
+        maxRequests = 500,
         message = "Too many requests. Please try again later."
     } = options;
 
@@ -80,12 +80,89 @@ function createRateLimiter(options = {}) {
 
 // Pre-configured rate limiters for different use cases
 
-// Strict limiter for login/auth endpoints (5 requests per 15 minutes)
-export const loginRateLimiter = createRateLimiter({
-    windowMs: 15 * 60 * 1000,
-    maxRequests: 5,
-    message: "Too many login attempts. Please try again after 15 minutes."
-});
+// Strict limiter for login/auth endpoints (only counts FAILED attempts)
+// Successful logins bypass the limit
+export const loginRateLimiter = (req, res, next) => {
+    const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    const key = `failed-login-${clientIp}`;
+    const windowMs = 15 * 60 * 1000; // 15 minutes
+    const maxFailedAttempts = 5;
+    const now = Date.now();
+
+    // Get or initialize failed attempts data
+    let failedData = requestStore.get(key);
+
+    if (!failedData) {
+        // First attempt from this IP
+        requestStore.set(key, {
+            count: 0,
+            firstRequest: now
+        });
+        return next();
+    }
+
+    // Check if window has expired
+    if (now - failedData.firstRequest > windowMs) {
+        // Reset the window
+        requestStore.set(key, {
+            count: 0,
+            firstRequest: now
+        });
+        return next();
+    }
+
+    // Check if limit exceeded (only for failed attempts)
+    if (failedData.count >= maxFailedAttempts) {
+        const timeLeft = Math.ceil((windowMs - (now - failedData.firstRequest)) / 1000 / 60);
+        return res.status(429).json({
+            error: "Too many failed login attempts. Please try again after 15 minutes.",
+            retryAfter: `${timeLeft} minutes`,
+            limit: maxFailedAttempts,
+            windowMs: windowMs / 1000 / 60
+        });
+    }
+
+    // Allow the request to proceed
+    // The login controller will call resetFailedLoginAttempts() on success
+    next();
+};
+
+// Helper function to reset failed login attempts on successful login
+export const resetFailedLoginAttempts = (req) => {
+    const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    const key = `failed-login-${clientIp}`;
+    requestStore.delete(key); // Clear failed attempts on successful login
+};
+
+// Helper function to increment failed login attempts
+export const incrementFailedLoginAttempts = (req) => {
+    const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    const key = `failed-login-${clientIp}`;
+    const now = Date.now();
+    const windowMs = 15 * 60 * 1000;
+
+    let failedData = requestStore.get(key);
+
+    if (!failedData) {
+        requestStore.set(key, {
+            count: 1,
+            firstRequest: now
+        });
+    } else {
+        // Check if window has expired
+        if (now - failedData.firstRequest > windowMs) {
+            // Reset the window
+            requestStore.set(key, {
+                count: 1,
+                firstRequest: now
+            });
+        } else {
+            // Increment failed attempts
+            failedData.count++;
+            requestStore.set(key, failedData);
+        }
+    }
+};
 
 // Moderate limiter for registration (3 requests per hour)
 export const registerRateLimiter = createRateLimiter({

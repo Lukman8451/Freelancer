@@ -24,6 +24,11 @@ const Contract = sequelize.define("Contracts", {
         defaultValue: "pending",
         allowNull: false
     },
+    totalAmount: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+        defaultValue: null
+    },
     createdAt: {
         type: DataTypes.DATE,
         defaultValue: sequelize.fn("now"),
@@ -44,6 +49,20 @@ Contract.associate = function () {
         onDelete: "SET NULL",
         onUpdate: "CASCADE",
         allowNull: false
+    });
+    Contract.belongsTo(models.Users, {
+        foreignKey: "clientId",
+        as: "client",
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
+        allowNull: true
+    });
+    Contract.belongsTo(models.Users, {
+        foreignKey: "freelancerId",
+        as: "freelancer",
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
+        allowNull: true
     });
     Contract.hasMany(models.Milestones, {
         foreignKey: "contractId",

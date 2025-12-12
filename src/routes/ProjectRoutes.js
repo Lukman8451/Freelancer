@@ -54,6 +54,12 @@ ProjectRouter.put(
   projectController.updateProjectStatus
 );
 
+ProjectRouter.put(
+  "/projects/:id/progress",
+  isAuthenticated,
+  projectController.updateProjectProgress
+);
+
 ProjectRouter.delete(
   "/projects/:id",
   isAuthenticated,

@@ -10,6 +10,7 @@ class ProjectRepository {
         return await Project.findByPk(id, {
             include: [
                 { association: 'client', attributes: ['id', 'name', 'email'] },
+                { association: 'assignedFreelancer', attributes: ['id', 'name', 'email'] },
                 { association: 'proposals' },
                 { association: 'contract' }
             ]

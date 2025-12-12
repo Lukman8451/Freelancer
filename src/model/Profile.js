@@ -28,6 +28,15 @@ const Profile = sequelize.define("Profiles", {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    country: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    currency: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "USD",
+    },
     experienceLevel: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -39,6 +48,38 @@ const Profile = sequelize.define("Profiles", {
     isVerified: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
+    },
+    // Payment/Payout Account Details
+    razorpayContactId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "Razorpay contact ID for payouts"
+    },
+    bankAccountNumber: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "Bank account number for payouts"
+    },
+    bankIfscCode: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "Bank IFSC code for payouts"
+    },
+    bankAccountHolderName: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "Bank account holder name"
+    },
+    bankAccountType: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "Bank account type (savings or current)",
+        validate: {
+            isIn: {
+                args: [['savings', 'current']],
+                msg: "Bank account type must be either 'savings' or 'current'"
+            }
+        }
     },
     createdAt: {
         type: DataTypes.DATE,

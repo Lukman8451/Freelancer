@@ -24,7 +24,10 @@ const isAuthenticated = async (req, res, next) => {
         req.user = user;
         next();
     } catch (error) {
-        console.error("JWT verification error:", error.message);
+        // Only log unexpected errors, not malformed token errors
+        if (error.name !== 'JsonWebTokenError') {
+            console.error("JWT verification error:", error.message);
+        }
         return res.status(401).json({ error: "Invalid or expired token" });
     }
 }

@@ -9,7 +9,9 @@ class ContractRepository {
     findById = async (id) => {
         return await Contract.findByPk(id, {
             include: [
-                { association: 'project', attributes: ['id', 'title'] },
+                { association: 'project', attributes: ['id', 'title', 'description', 'status'] },
+                { association: 'client', attributes: ['id', 'name', 'email'] },
+                { association: 'freelancer', attributes: ['id', 'name', 'email'] },
                 { association: 'milestones' }
             ]
         });
@@ -55,7 +57,14 @@ class ContractRepository {
         return await Contract.findAll({
             where: { clientId: clientId },
             include: [
-                { association: 'project' },
+                { 
+                    association: 'project', 
+                    attributes: ['id', 'title', 'description', 'status'] 
+                },
+                {
+                    association: 'freelancer',
+                    attributes: ['id', 'name', 'email']
+                },
                 { association: 'milestones' }
             ],
             order: [['createdAt', 'DESC']]
@@ -66,7 +75,14 @@ class ContractRepository {
         return await Contract.findAll({
             where: { freelancerId: freelancerId },
             include: [
-                { association: 'project' },
+                { 
+                    association: 'project', 
+                    attributes: ['id', 'title', 'description', 'status'] 
+                },
+                {
+                    association: 'client',
+                    attributes: ['id', 'name', 'email']
+                },
                 { association: 'milestones' }
             ],
             order: [['createdAt', 'DESC']]

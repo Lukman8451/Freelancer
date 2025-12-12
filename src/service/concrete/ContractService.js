@@ -1,5 +1,6 @@
 import { IContractService } from "../abstract/IContractService.js";
 import ContractRepository from "../../data-access/concrete/ContractRepository.js";
+import MilestoneService from "./MilestoneService.js";
 
 export class ContractService extends IContractService {
     constructor() {
@@ -45,6 +46,10 @@ export class ContractService extends IContractService {
 
     deleteContract = async (id) => {
         return await this.ContractRepository.delete(id);
+    };
+
+    getMilestonesByContractId = async (contractId) => {
+        return await MilestoneService.getMilestonesByContractId(contractId);
     };
 }
 

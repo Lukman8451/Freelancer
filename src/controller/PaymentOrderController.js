@@ -1,9 +1,11 @@
 import PaymentOrderService from "../service/concrete/PaymentOrderService.js";
 import MilestoneService from "../service/concrete/MilestoneService.js";
 import ContractService from "../service/concrete/ContractService.js";
+import ProfileService from "../service/concrete/ProfileService.js";
 import { sequelize } from "../model/index.js";
 import { env } from "../config/config.js";
 import Razorpay from "razorpay";
+import crypto from "crypto";
 
 class PaymentOrderController {
     // Create payment order (initiate payment)
@@ -38,29 +40,56 @@ class PaymentOrderController {
                 return res.status(403).json({ error: "Forbidden. Only client can fund milestones" });
             }
 
+            // Milestone amounts are stored in USD
+            // For Razorpay, we'll convert to INR for payment (Razorpay works best with INR)
+            // Amounts are stored in USD but payment happens in INR
+            let currency = "INR"; // Use INR for Razorpay (Indian payment gateway)
+            let paymentAmount = milestone.amount; // Start with USD amount
+            
+            // Convert USD to INR for Razorpay payment
+            // Exchange rate: 1 USD = 83 INR (update with real-time rates in production)
+            const USD_TO_INR_RATE = 83.0;
+            paymentAmount = milestone.amount * USD_TO_INR_RATE;
+            
+            // Note: User's currency preference can be used for display, but payment in INR
+            // This ensures compatibility with Razorpay's Indian payment gateway
+            
+            // Convert amount to smallest currency unit
+            // USD uses cents (100 cents = 1 dollar), INR uses paise (100 paise = 1 rupee)
+            // All supported currencies use 100 subunits = 1 unit
+            let amountInSmallestUnit = Math.round(paymentAmount * 100);
+            
             // Create Razorpay order
             const razorpay = new Razorpay({
                 key_id: env.RAZORPAY_KEY_ID,
                 key_secret: env.RAZORPAY_KEY_SECRET
             });
 
+            // Generate receipt (max 40 characters for Razorpay)
+            // Use first 8 chars of milestoneId to keep it short
+            const receiptShort = milestoneId.substring(0, 8).replace(/-/g, '');
+            const receipt = `ms_${receiptShort}`;
+            
             const razorpayOrder = await razorpay.orders.create({
-                amount: Math.round(milestone.amount * 100), // Convert to paise
-                currency: "INR",
-                receipt: `milestone_${milestoneId}`,
+                amount: amountInSmallestUnit,
+                currency: currency,
+                receipt: receipt,
                 notes: {
                     milestoneId: milestoneId,
-                    userId: req.user.id
+                    userId: req.user.id,
+                    originalCurrency: "USD", // Original amount is in USD
+                    originalAmount: milestone.amount // Store original USD amount
                 }
             });
 
             // Create payment order in database
+            // Store original USD amount, payment happens in INR
             const paymentOrder = await PaymentOrderService.create({
                 milestoneId,
                 userId: userId || req.user.id,
                 razorpayOrderId: razorpayOrder.id,
-                amount: milestone.amount,
-                currency: "INR",
+                amount: milestone.amount, // Store original USD amount
+                currency: "INR", // Payment currency (always INR for Razorpay)
                 status: "created"
             });
 
@@ -73,7 +102,8 @@ class PaymentOrderController {
                     id: razorpayOrder.id,
                     amount: razorpayOrder.amount,
                     currency: razorpayOrder.currency
-                }
+                },
+                razorpayKeyId: env.RAZORPAY_KEY_ID // Send key ID to frontend for checkout
             });
         } catch (error) {
             await transaction.rollback();
@@ -170,6 +200,76 @@ class PaymentOrderController {
             console.error("Get user payment orders error:", error);
             return res.status(500).json({
                 error: "Failed to fetch payment orders",
+                details: error.message
+            });
+        }
+    };
+
+    // Verify payment (called after Razorpay payment)
+    verifyPayment = async (req, res) => {
+        const transaction = await sequelize.transaction();
+        
+        try {
+            const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+            if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+                await transaction.rollback();
+                return res.status(400).json({ error: "Payment verification data is required" });
+            }
+
+            // Initialize Razorpay
+            const razorpay = new Razorpay({
+                key_id: env.RAZORPAY_KEY_ID,
+                key_secret: env.RAZORPAY_KEY_SECRET
+            });
+
+            // Verify payment signature
+            const text = `${razorpay_order_id}|${razorpay_payment_id}`;
+            const generatedSignature = crypto
+                .createHmac('sha256', env.RAZORPAY_KEY_SECRET)
+                .update(text)
+                .digest('hex');
+
+            if (generatedSignature !== razorpay_signature) {
+                await transaction.rollback();
+                return res.status(400).json({ error: "Invalid payment signature" });
+            }
+
+            // Find payment order
+            const paymentOrder = await PaymentOrderService.getPaymentOrderByRazorpayId(razorpay_order_id);
+            if (!paymentOrder) {
+                await transaction.rollback();
+                return res.status(404).json({ error: "Payment order not found" });
+            }
+
+            // Check if already paid
+            if (paymentOrder.status === "paid") {
+                await transaction.rollback();
+                return res.status(200).json({ 
+                    message: "Payment already verified",
+                    paymentOrder 
+                });
+            }
+
+            // Update payment status to paid
+            await PaymentOrderService.updatePaymentOrderStatus(paymentOrder.id, "paid");
+
+            // Update milestone status to funded
+            if (paymentOrder.milestoneId) {
+                await MilestoneService.updateMilestoneStatus(paymentOrder.milestoneId, "funded");
+            }
+
+            await transaction.commit();
+
+            return res.status(200).json({
+                message: "Payment verified successfully",
+                paymentOrder: await PaymentOrderService.getPaymentOrderById(paymentOrder.id)
+            });
+        } catch (error) {
+            await transaction.rollback();
+            console.error("Verify payment error:", error);
+            return res.status(500).json({
+                error: "Failed to verify payment",
                 details: error.message
             });
         }

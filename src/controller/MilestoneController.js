@@ -1,5 +1,8 @@
 import MilestoneService from "../service/concrete/MilestoneService.js";
 import ContractService from "../service/concrete/ContractService.js";
+import ProfileService from "../service/concrete/ProfileService.js";
+import PaymentOrderService from "../service/concrete/PaymentOrderService.js";
+import WalletService from "../service/concrete/WalletService.js";
 import { sequelize } from "../model/index.js";
 
 class MilestoneController {
@@ -143,8 +146,31 @@ class MilestoneController {
             }
 
             const milestones = await MilestoneService.getMilestonesByContractId(contractId);
+            
+            // Get contract to calculate remaining amount
+            const contract = await ContractService.getContractById(contractId);
+            let totalAmount = contract?.totalAmount || 0;
+            let paidAmount = 0;
+            let remainingAmount = 0;
+            
+            if (milestones && Array.isArray(milestones)) {
+                // Calculate paid amount (sum of all milestone amounts that are funded or released)
+                paidAmount = milestones
+                    .filter(m => m.status === 'funded' || m.status === 'released')
+                    .reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0);
+                    
+                // Calculate remaining amount
+                remainingAmount = Math.max(0, totalAmount - paidAmount);
+            } else {
+                remainingAmount = totalAmount;
+            }
 
-            return res.status(200).json({ milestones });
+            return res.status(200).json({ 
+                milestones,
+                totalAmount,
+                paidAmount,
+                remainingAmount
+            });
         } catch (error) {
             console.error("Get contract milestones error:", error);
             return res.status(500).json({
@@ -230,6 +256,17 @@ class MilestoneController {
                 return res.status(404).json({ error: "Milestone not found" });
             }
 
+            // If milestone is released, credit wallet instead of direct payout
+            if (status === "released" && milestone.status === "funded") {
+                try {
+                    await this.creditWalletForMilestone(milestone, contract);
+                } catch (walletError) {
+                    console.error("Wallet credit error:", walletError);
+                    // Log error but don't fail the status update
+                    // Wallet credit can be retried manually if needed
+                }
+            }
+
             return res.status(200).json({ message: "Milestone status updated successfully" });
         } catch (error) {
             console.error("Update milestone status error:", error);
@@ -269,6 +306,81 @@ class MilestoneController {
                 error: "Failed to delete milestone",
                 details: error.message
             });
+        }
+    };
+
+    // Credit wallet when milestone is released (instead of direct payout)
+    creditWalletForMilestone = async (milestone, contract) => {
+        try {
+            // Get payment order for this milestone
+            const paymentOrder = await PaymentOrderService.getPaymentOrderByMilestoneId(milestone.id);
+            
+            if (!paymentOrder || paymentOrder.status !== "paid") {
+                console.error("Payment order not found or not paid");
+                throw new Error("Payment order not found or payment not completed");
+            }
+
+            // Check if wallet already credited for this milestone
+            const { WalletTransaction } = await import("../model/index.js");
+            const existingTransaction = await WalletTransaction.findOne({
+                where: {
+                    milestoneId: milestone.id,
+                    type: 'credit',
+                    status: 'completed'
+                }
+            });
+
+            if (existingTransaction) {
+                console.log("Wallet already credited for this milestone");
+                return;
+            }
+
+            // Calculate platform fee (1% of milestone amount)
+            const PLATFORM_FEE_PERCENTAGE = 1.0; // 1% platform fee
+            const platformFeeUSD = (milestone.amount * PLATFORM_FEE_PERCENTAGE) / 100;
+            const freelancerAmountUSD = milestone.amount - platformFeeUSD;
+
+            console.log("💰 Fee Calculation:", {
+                milestoneAmountUSD: milestone.amount,
+                platformFeePercentage: PLATFORM_FEE_PERCENTAGE + "%",
+                platformFeeUSD: platformFeeUSD.toFixed(2),
+                freelancerAmountUSD: freelancerAmountUSD.toFixed(2)
+            });
+
+            // Get or create wallet for freelancer
+            const wallet = await WalletService.getWalletByUserId(contract.freelancerId);
+            
+            // Credit wallet with freelancer amount (after platform fee)
+            const walletTransaction = await WalletService.creditWallet(
+                wallet.id,
+                freelancerAmountUSD,
+                `Payment for milestone: ${milestone.title}`,
+                milestone.id,
+                paymentOrder.id
+            );
+
+            // Update payment order with wallet credit details
+            await PaymentOrderService.updatePaymentOrder(paymentOrder.id, {
+                payoutStatus: "processed", // Mark as processed (credited to wallet)
+                payoutAmount: freelancerAmountUSD, // Amount credited to wallet (after platform fee)
+                platformFee: platformFeeUSD, // Platform fee amount
+                platformFeePercentage: PLATFORM_FEE_PERCENTAGE // Platform fee percentage
+            });
+
+            console.log("✅ Wallet credited successfully:", {
+                walletId: wallet.id,
+                milestoneId: milestone.id,
+                freelancerId: contract.freelancerId,
+                originalAmountUSD: milestone.amount,
+                platformFeeUSD: platformFeeUSD.toFixed(2),
+                freelancerAmountUSD: freelancerAmountUSD.toFixed(2),
+                newWalletBalance: (parseFloat(wallet.balance) + freelancerAmountUSD).toFixed(2),
+                transactionId: walletTransaction.id
+            });
+
+        } catch (error) {
+            console.error("Error crediting wallet for milestone:", error);
+            throw error;
         }
     };
 }

@@ -30,6 +30,12 @@ PaymentOrderRouter.get(
   paymentOrderController.getAllPaymentOrders
 );
 
+PaymentOrderRouter.post(
+  "/payments/verify",
+  isAuthenticated,
+  paymentOrderController.verifyPayment
+);
+
 PaymentOrderRouter.put(
   "/payments/status",
   paymentOrderController.updatePaymentOrderStatus
