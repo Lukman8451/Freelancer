@@ -2,6 +2,7 @@ import PaymentOrderService from "../service/concrete/PaymentOrderService.js";
 import MilestoneService from "../service/concrete/MilestoneService.js";
 import ContractService from "../service/concrete/ContractService.js";
 import ProfileService from "../service/concrete/ProfileService.js";
+import MilestoneController from "./MilestoneController.js";
 import { sequelize } from "../model/index.js";
 import { env } from "../config/config.js";
 import Razorpay from "razorpay";
@@ -254,9 +255,29 @@ class PaymentOrderController {
             // Update payment status to paid
             await PaymentOrderService.updatePaymentOrderStatus(paymentOrder.id, "paid");
 
-            // Update milestone status to funded
+            // Update milestone status to funded, then automatically release it
             if (paymentOrder.milestoneId) {
+                // First update to funded
                 await MilestoneService.updateMilestoneStatus(paymentOrder.milestoneId, "funded");
+                
+                // Get milestone and contract to auto-release
+                const milestone = await MilestoneService.getMilestoneById(paymentOrder.milestoneId);
+                if (milestone) {
+                    const contract = await ContractService.getContractById(milestone.contractId);
+                    if (contract) {
+                        // Auto-release: credit wallet and update status to released
+                        try {
+                            await MilestoneController.creditWalletForMilestone(milestone, contract);
+                            // Update milestone status to released after wallet is credited
+                            await MilestoneService.updateMilestoneStatus(paymentOrder.milestoneId, "released");
+                            console.log("✅ Milestone automatically released after successful payment");
+                        } catch (walletError) {
+                            console.error("Error auto-releasing milestone after payment:", walletError);
+                            // Don't fail the payment verification if wallet credit fails
+                            // The milestone is still marked as funded and can be manually released later
+                        }
+                    }
+                }
             }
 
             await transaction.commit();
@@ -305,9 +326,28 @@ class PaymentOrderController {
                 return res.status(404).json({ error: "Payment order not found" });
             }
 
-            // If payment is successful, update milestone status to funded
+            // If payment is successful, update milestone status to funded, then auto-release
             if (status === "paid" && paymentOrder.milestoneId) {
+                // First update to funded
                 await MilestoneService.updateMilestoneStatus(paymentOrder.milestoneId, "funded");
+                
+                // Get milestone and contract to auto-release
+                const milestone = await MilestoneService.getMilestoneById(paymentOrder.milestoneId);
+                if (milestone) {
+                    const contract = await ContractService.getContractById(milestone.contractId);
+                    if (contract) {
+                        // Auto-release: credit wallet and update status to released
+                        try {
+                            await MilestoneController.creditWalletForMilestone(milestone, contract);
+                            // Update milestone status to released after wallet is credited
+                            await MilestoneService.updateMilestoneStatus(paymentOrder.milestoneId, "released");
+                            console.log("✅ Milestone automatically released after successful payment (webhook)");
+                        } catch (walletError) {
+                            console.error("Error auto-releasing milestone after payment (webhook):", walletError);
+                            // Don't fail the status update if wallet credit fails
+                        }
+                    }
+                }
             }
 
             return res.status(200).json({ message: "Payment order status updated successfully" });

@@ -58,13 +58,13 @@ const PaymentOrder = sequelize.define("PaymentOrders", {
     platformFee: {
         type: DataTypes.FLOAT,
         allowNull: true,
-        comment: "Platform fee amount (1% of milestone amount)"
+        comment: "Platform fee amount (10% of milestone amount)"
     },
     platformFeePercentage: {
         type: DataTypes.FLOAT,
         allowNull: true,
-        defaultValue: 1.0,
-        comment: "Platform fee percentage (default 1%)"
+        defaultValue: 10.0,
+        comment: "Platform fee percentage (default 10%)"
     },
     createdAt: {
         type: DataTypes.DATE,

@@ -36,8 +36,8 @@ class MilestoneController {
             }
 
             // Check if user is part of the contract
-            if (contract.clientId !== req.user.id && 
-                contract.freelancerId !== req.user.id && 
+            if (contract.clientId !== req.user.id &&
+                contract.freelancerId !== req.user.id &&
                 req.user.role !== "admin") {
                 await transaction.rollback();
                 return res.status(403).json({ error: "Forbidden" });
@@ -146,26 +146,26 @@ class MilestoneController {
             }
 
             const milestones = await MilestoneService.getMilestonesByContractId(contractId);
-            
+
             // Get contract to calculate remaining amount
             const contract = await ContractService.getContractById(contractId);
             let totalAmount = contract?.totalAmount || 0;
             let paidAmount = 0;
             let remainingAmount = 0;
-            
+
             if (milestones && Array.isArray(milestones)) {
                 // Calculate paid amount (sum of all milestone amounts that are funded or released)
                 paidAmount = milestones
                     .filter(m => m.status === 'funded' || m.status === 'released')
                     .reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0);
-                    
+
                 // Calculate remaining amount
                 remainingAmount = Math.max(0, totalAmount - paidAmount);
             } else {
                 remainingAmount = totalAmount;
             }
 
-            return res.status(200).json({ 
+            return res.status(200).json({
                 milestones,
                 totalAmount,
                 paidAmount,
@@ -198,8 +198,8 @@ class MilestoneController {
 
             // Get contract to check ownership
             const contract = await ContractService.getContractById(milestone.contractId);
-            if (contract.clientId !== req.user.id && 
-                contract.freelancerId !== req.user.id && 
+            if (contract.clientId !== req.user.id &&
+                contract.freelancerId !== req.user.id &&
                 req.user.role !== "admin") {
                 return res.status(403).json({ error: "Forbidden" });
             }
@@ -314,7 +314,7 @@ class MilestoneController {
         try {
             // Get payment order for this milestone
             const paymentOrder = await PaymentOrderService.getPaymentOrderByMilestoneId(milestone.id);
-            
+
             if (!paymentOrder || paymentOrder.status !== "paid") {
                 console.error("Payment order not found or not paid");
                 throw new Error("Payment order not found or payment not completed");
@@ -335,8 +335,8 @@ class MilestoneController {
                 return;
             }
 
-            // Calculate platform fee (1% of milestone amount)
-            const PLATFORM_FEE_PERCENTAGE = 1.0; // 1% platform fee
+            // Calculate platform fee (10% of milestone amount)
+            const PLATFORM_FEE_PERCENTAGE = 10.0; // 10% platform fee
             const platformFeeUSD = (milestone.amount * PLATFORM_FEE_PERCENTAGE) / 100;
             const freelancerAmountUSD = milestone.amount - platformFeeUSD;
 
@@ -349,12 +349,12 @@ class MilestoneController {
 
             // Get or create wallet for freelancer
             const wallet = await WalletService.getWalletByUserId(contract.freelancerId);
-            
+
             // Credit wallet with freelancer amount (after platform fee)
             const walletTransaction = await WalletService.creditWallet(
                 wallet.id,
                 freelancerAmountUSD,
-                `Payment for milestone: ${milestone.title}`,
+                `Payment for milestone: ${milestone.title} (10% platform fee deducted for Razorpay charges and taxes)`,
                 milestone.id,
                 paymentOrder.id
             );
