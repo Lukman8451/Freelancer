@@ -1,4 +1,5 @@
 import UserService from "../service/concrete/UserService.js";
+import EmailService from "../service/concrete/EmailService.js";
 import { sequelize } from "../model/index.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -74,6 +75,9 @@ class UserController {
             });
 
             await transaction.commit();
+
+            // Send welcome email (fire-and-forget, don't block registration)
+            EmailService.sendWelcomeEmail(name, email, role || "freelancer");
 
             return res.status(201).json({
                 message: "User registered successfully",

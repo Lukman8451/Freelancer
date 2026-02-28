@@ -17,6 +17,12 @@ export const env = {
   RAZORPAY_X_KEY_ID: process.env.RAZORPAY_X_KEY_ID || "",
   RAZORPAY_X_KEY_SECRET: process.env.RAZORPAY_X_KEY_SECRET || "",
   RAZORPAY_X_ACCOUNT_NUMBER: process.env.RAZORPAY_X_ACCOUNT_NUMBER || "",
-  SERVER_URL: process.env.SERVER_URL || process.env.server || "http://localhost:5000"
+  SERVER_URL: process.env.SERVER_URL || process.env.server || "http://localhost:5000",
+  // Email Configuration
+  SMTP_HOST: process.env.SMTP_HOST || "smtp.gmail.com",
+  SMTP_PORT: process.env.SMTP_PORT || 587,
+  SMTP_USER: process.env.SMTP_USER || "",
+  SMTP_PASS: process.env.SMTP_PASS || "",
+  SMTP_FROM: process.env.SMTP_FROM || "FreelanceHub <noreply@freelancehub.com>"
 };
 
