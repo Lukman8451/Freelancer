@@ -21,6 +21,21 @@ UserRouter.post(
     userController.login
 );
 
+UserRouter.get(
+    "/users/verify-email",
+    userController.verifyEmail
+);
+
+UserRouter.post(
+    "/users/forgot-password",
+    userController.forgotPassword
+);
+
+UserRouter.post(
+    "/users/reset-password",
+    userController.resetPassword
+);
+
 // Protected routes (authentication required)
 UserRouter.get(
     "/users/profile",

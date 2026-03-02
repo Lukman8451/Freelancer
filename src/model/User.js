@@ -28,6 +28,10 @@ const User = sequelize.define("Users", {
         type: DataTypes.ENUM("active", "blocked"),
         defaultValue: "active"
     },
+    isEmailVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
     createdAt: {
         type: DataTypes.DATE,
         defaultValue: sequelize.fn("now"),

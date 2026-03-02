@@ -18,6 +18,31 @@ class ProposalController {
                 return res.status(400).json({ error: "Project ID is required" });
             }
 
+            // Validate bid amount
+            const bid = parseFloat(bidAmount);
+            if (!bidAmount || isNaN(bid) || bid <= 0) {
+                await transaction.rollback();
+                return res.status(400).json({ error: "Bid amount must be a positive number" });
+            }
+
+            // Validate duration
+            const duration = parseInt(durationInDays);
+            if (!durationInDays || isNaN(duration) || duration <= 0) {
+                await transaction.rollback();
+                return res.status(400).json({ error: "Duration in days must be a positive whole number" });
+            }
+
+            // Validate cover letter
+            if (!coverLetter || coverLetter.trim().length < 20) {
+                await transaction.rollback();
+                return res.status(400).json({ error: "Cover letter is required and must be at least 20 characters" });
+            }
+
+            if (coverLetter.length > 5000) {
+                await transaction.rollback();
+                return res.status(400).json({ error: "Cover letter must not exceed 5000 characters" });
+            }
+
             // Check if project exists
             const project = await ProjectService.getProjectById(projectId);
             if (!project) {
@@ -231,69 +256,77 @@ class ProposalController {
 
     // Update proposal status (Accept/Reject)
     updateProposalStatus = async (req, res) => {
+        const transaction = await sequelize.transaction();
         try {
             const { id } = req.params;
             const { status } = req.body;
 
             if (!status) {
+                await transaction.rollback();
                 return res.status(400).json({ error: "Status is required" });
             }
 
             const validStatuses = ["pending", "accepted", "rejected"];
             if (!validStatuses.includes(status)) {
+                await transaction.rollback();
                 return res.status(400).json({ error: "Invalid status" });
             }
 
             // Check if proposal exists
             const proposal = await ProposalService.getProposalById(id);
             if (!proposal) {
+                await transaction.rollback();
                 return res.status(404).json({ error: "Proposal not found" });
             }
 
             // Get the project
             const project = await ProjectService.getProjectById(proposal.projectId);
-            
+
             // Only project owner can accept/reject proposals
             if (project.clientId !== req.user.id && req.user.role !== "admin") {
+                await transaction.rollback();
                 return res.status(403).json({ error: "Forbidden. Only project owner can accept/reject proposals" });
             }
 
             const result = await ProposalService.updateProposalStatus(id, status);
             if (!result || result[0] === 0) {
+                await transaction.rollback();
                 return res.status(404).json({ error: "Proposal not found" });
             }
 
             // If proposal is accepted, change project status to "in_progress", create contract, and reject other proposals
             if (status === "accepted") {
                 // Update project status and assign freelancer
-                await ProjectService.updateProject(proposal.projectId, { 
+                await ProjectService.updateProject(proposal.projectId, {
                     status: "in_progress",
                     assignedFreelancerId: proposal.freelancerId,
                     lastProgressUpdate: new Date()
                 });
-                
+
                 // Check if contract already exists
                 const existingContract = await ContractService.getContractByProjectId(proposal.projectId);
                 if (!existingContract) {
-                    // Create contract automatically with total amount from proposal
                     await ContractService.create({
                         projectId: proposal.projectId,
                         clientId: project.clientId,
                         freelancerId: proposal.freelancerId,
-                        totalAmount: proposal.bidAmount, // Set total amount from accepted proposal
+                        totalAmount: proposal.bidAmount,
                         status: "active"
                     });
                 }
-                
-                // Reject all other pending proposals for this project
-                const allProposals = await ProposalService.getProposalsByProjectId(proposal.projectId);
-                for (const otherProposal of allProposals) {
-                    if (otherProposal.id !== id && otherProposal.status === "pending") {
-                        await ProposalService.updateProposalStatus(otherProposal.id, "rejected");
-                    }
-                }
 
-                // Notify freelancer their proposal was accepted (fire-and-forget)
+                // Batch-reject all other pending proposals for this project
+                const allProposals = await ProposalService.getProposalsByProjectId(proposal.projectId);
+                const rejectPromises = allProposals
+                    .filter(p => p.id !== id && p.status === "pending")
+                    .map(p => ProposalService.updateProposalStatus(p.id, "rejected"));
+                await Promise.all(rejectPromises);
+            }
+
+            await transaction.commit();
+
+            // Send email after commit (fire-and-forget)
+            if (status === "accepted") {
                 const freelancer = await UserService.getUserById(proposal.freelancerId);
                 if (freelancer) {
                     EmailService.sendProposalAcceptedEmail(freelancer.name, freelancer.email, project.title, proposal.bidAmount);
@@ -302,6 +335,7 @@ class ProposalController {
 
             return res.status(200).json({ message: `Proposal ${status} successfully` });
         } catch (error) {
+            await transaction.rollback();
             console.error("Update proposal status error:", error);
             return res.status(500).json({
                 error: "Failed to update proposal status",

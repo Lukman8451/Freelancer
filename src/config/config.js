@@ -18,6 +18,7 @@ export const env = {
   RAZORPAY_X_KEY_SECRET: process.env.RAZORPAY_X_KEY_SECRET || "",
   RAZORPAY_X_ACCOUNT_NUMBER: process.env.RAZORPAY_X_ACCOUNT_NUMBER || "",
   SERVER_URL: process.env.SERVER_URL || process.env.server || "http://localhost:5000",
+  CLIENT_URL: process.env.CLIENT_URL || "http://localhost:3000",
   // Email Configuration
   SMTP_HOST: process.env.SMTP_HOST || "smtp.gmail.com",
   SMTP_PORT: process.env.SMTP_PORT || 587,

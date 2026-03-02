@@ -10,17 +10,40 @@ class ProjectController {
         try {
             const { clientId, title, description, budgetMin, budgetMax } = req.body;
 
-            if (!title) {
+            if (!title || title.trim().length < 5) {
                 await transaction.rollback();
-                return res.status(400).json({ error: "Title is required" });
+                return res.status(400).json({ error: "Title is required and must be at least 5 characters" });
+            }
+
+            if (!description || description.trim().length < 10) {
+                await transaction.rollback();
+                return res.status(400).json({ error: "Description is required and must be at least 10 characters" });
+            }
+
+            const minBudget = parseFloat(budgetMin);
+            const maxBudget = parseFloat(budgetMax);
+
+            if (isNaN(minBudget) || minBudget <= 0) {
+                await transaction.rollback();
+                return res.status(400).json({ error: "Minimum budget must be a positive number" });
+            }
+
+            if (isNaN(maxBudget) || maxBudget <= 0) {
+                await transaction.rollback();
+                return res.status(400).json({ error: "Maximum budget must be a positive number" });
+            }
+
+            if (minBudget > maxBudget) {
+                await transaction.rollback();
+                return res.status(400).json({ error: "Maximum budget must be greater than or equal to minimum budget" });
             }
 
             const project = await ProjectService.create({
                 clientId: clientId || req.user.id,
-                title,
-                description,
-                budgetMin,
-                budgetMax,
+                title: title.trim(),
+                description: description.trim(),
+                budgetMin: minBudget,
+                budgetMax: maxBudget,
                 status: "open"
             });
 

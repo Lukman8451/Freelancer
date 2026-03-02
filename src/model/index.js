@@ -13,6 +13,7 @@ import { PaymentOrder } from "./PaymentOrder.js";
 import { Wallet } from "./Wallet.js";
 import { WalletTransaction } from "./WalletTransaction.js";
 import { WithdrawalRequest } from "./WithdrawalRequest.js";
+import { VerificationToken } from "./VerificationToken.js";
 
 Object.values(sequelize.models).forEach((model) => {
     if (typeof model.associate === "function") {
@@ -44,3 +45,4 @@ export { PaymentOrder } from "./PaymentOrder.js";
 export { Wallet } from "./Wallet.js";
 export { WalletTransaction } from "./WalletTransaction.js";
 export { WithdrawalRequest } from "./WithdrawalRequest.js";
+export { VerificationToken } from "./VerificationToken.js";

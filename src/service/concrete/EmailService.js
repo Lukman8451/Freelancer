@@ -192,6 +192,82 @@ class EmailService {
             console.error("Failed to send proposal accepted email:", error.message);
         }
     };
+
+    sendVerificationEmail = async (name, email, verificationUrl) => {
+        try {
+            const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Verify Your Email</h1>
+                </div>
+                <div style="background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
+                    <h2 style="color: #333;">Hi ${name},</h2>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                        Thanks for registering on FreelanceHub! Please verify your email address by clicking the button below.
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${verificationUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+                            Verify Email
+                        </a>
+                    </div>
+                    <p style="color: #888; font-size: 14px;">This link expires in <strong>24 hours</strong>. If you did not create an account, you can ignore this email.</p>
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
+                    <p style="color: #aaa; font-size: 12px; text-align: center;">
+                        Or copy this link: <a href="${verificationUrl}" style="color: #667eea;">${verificationUrl}</a>
+                    </p>
+                </div>
+            </div>`;
+
+            await this.transporter.sendMail({
+                from: env.SMTP_FROM,
+                to: email,
+                subject: "Verify your FreelanceHub email",
+                html
+            });
+
+            console.log(`Verification email sent to ${email}`);
+        } catch (error) {
+            console.error("Failed to send verification email:", error.message);
+        }
+    };
+
+    sendPasswordResetEmail = async (name, email, resetUrl) => {
+        try {
+            const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Password Reset</h1>
+                </div>
+                <div style="background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
+                    <h2 style="color: #333;">Hi ${name},</h2>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                        We received a request to reset your password. Click the button below to set a new password.
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${resetUrl}" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+                            Reset Password
+                        </a>
+                    </div>
+                    <p style="color: #888; font-size: 14px;">This link expires in <strong>1 hour</strong>. If you did not request a password reset, you can safely ignore this email.</p>
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
+                    <p style="color: #aaa; font-size: 12px; text-align: center;">
+                        Or copy this link: <a href="${resetUrl}" style="color: #f59e0b;">${resetUrl}</a>
+                    </p>
+                </div>
+            </div>`;
+
+            await this.transporter.sendMail({
+                from: env.SMTP_FROM,
+                to: email,
+                subject: "Reset your FreelanceHub password",
+                html
+            });
+
+            console.log(`Password reset email sent to ${email}`);
+        } catch (error) {
+            console.error("Failed to send password reset email:", error.message);
+        }
+    };
 }
 
 export default new EmailService();

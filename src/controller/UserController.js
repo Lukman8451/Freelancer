@@ -1,7 +1,8 @@
 import UserService from "../service/concrete/UserService.js";
 import EmailService from "../service/concrete/EmailService.js";
-import { sequelize } from "../model/index.js";
+import { sequelize, VerificationToken } from "../model/index.js";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { env } from "../config/config.js";
 import { resetFailedLoginAttempts, incrementFailedLoginAttempts } from "../middlewares/rateLimiter.js";
@@ -74,10 +75,21 @@ class UserController {
                 status: "active"
             });
 
+            // Generate email verification token
+            const verificationTokenValue = crypto.randomBytes(32).toString("hex");
+            await VerificationToken.create({
+                userId: user.id,
+                token: verificationTokenValue,
+                type: "email_verification",
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+            });
+
             await transaction.commit();
 
-            // Send welcome email (fire-and-forget, don't block registration)
+            // Send welcome + verification emails (fire-and-forget)
+            const verificationUrl = `${env.CLIENT_URL || "http://localhost:3000"}/verify-email?token=${verificationTokenValue}`;
             EmailService.sendWelcomeEmail(name, email, role || "freelancer");
+            EmailService.sendVerificationEmail(name, email, verificationUrl);
 
             return res.status(201).json({
                 message: "User registered successfully",
@@ -193,13 +205,17 @@ class UserController {
         }
     };
 
-    // Get user by ID
+    // Get user by ID (own profile or admin only)
     getUserById = async (req, res) => {
         try {
             const { id } = req.params;
 
             if (!id) {
                 return res.status(400).json({ error: "User ID is required" });
+            }
+
+            if (req.user.id !== id && req.user.role !== "admin") {
+                return res.status(403).json({ error: "Forbidden. You can only view your own profile." });
             }
 
             const user = await UserService.getUserById(id);
@@ -563,6 +579,120 @@ class UserController {
                 error: "Failed to fetch user statistics",
                 details: error.message
             });
+        }
+    };
+
+    // Verify email with token
+    verifyEmail = async (req, res) => {
+        try {
+            const { token } = req.query;
+
+            if (!token) {
+                return res.status(400).json({ error: "Verification token is required" });
+            }
+
+            const record = await VerificationToken.findOne({
+                where: { token, type: "email_verification" }
+            });
+
+            if (!record) {
+                return res.status(400).json({ error: "Invalid or expired verification token" });
+            }
+
+            if (record.usedAt) {
+                return res.status(400).json({ error: "This verification link has already been used" });
+            }
+
+            if (new Date() > record.expiresAt) {
+                return res.status(400).json({ error: "Verification token has expired. Please request a new one." });
+            }
+
+            await UserService.updateUser(record.userId, { isEmailVerified: true });
+            await record.update({ usedAt: new Date() });
+
+            return res.status(200).json({ message: "Email verified successfully! You can now login." });
+        } catch (error) {
+            console.error("Verify email error:", error);
+            return res.status(500).json({ error: "Failed to verify email", details: error.message });
+        }
+    };
+
+    // Forgot password — send reset email
+    forgotPassword = async (req, res) => {
+        try {
+            const { email } = req.body;
+
+            if (!email) {
+                return res.status(400).json({ error: "Email is required" });
+            }
+
+            // Always return 200 to prevent email enumeration
+            const user = await UserService.getUserByEmail(email);
+            if (user) {
+                // Invalidate any existing password reset tokens for this user
+                await VerificationToken.update(
+                    { usedAt: new Date() },
+                    { where: { userId: user.id, type: "password_reset", usedAt: null } }
+                );
+
+                const resetTokenValue = crypto.randomBytes(32).toString("hex");
+                await VerificationToken.create({
+                    userId: user.id,
+                    token: resetTokenValue,
+                    type: "password_reset",
+                    expiresAt: new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+                });
+
+                const resetUrl = `${env.CLIENT_URL || "http://localhost:3000"}/reset-password?token=${resetTokenValue}`;
+                EmailService.sendPasswordResetEmail(user.name, user.email, resetUrl);
+            }
+
+            return res.status(200).json({ message: "If an account with that email exists, a password reset link has been sent." });
+        } catch (error) {
+            console.error("Forgot password error:", error);
+            return res.status(500).json({ error: "Failed to process request", details: error.message });
+        }
+    };
+
+    // Reset password with token
+    resetPassword = async (req, res) => {
+        try {
+            const { token, newPassword } = req.body;
+
+            if (!token || !newPassword) {
+                return res.status(400).json({ error: "Token and new password are required" });
+            }
+
+            if (newPassword.length < 6) {
+                return res.status(400).json({ error: "Password must be at least 6 characters long" });
+            }
+
+            const record = await VerificationToken.findOne({
+                where: { token, type: "password_reset" }
+            });
+
+            if (!record) {
+                return res.status(400).json({ error: "Invalid or expired reset token" });
+            }
+
+            if (record.usedAt) {
+                return res.status(400).json({ error: "This reset link has already been used" });
+            }
+
+            if (new Date() > record.expiresAt) {
+                return res.status(400).json({ error: "Reset token has expired. Please request a new password reset." });
+            }
+
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(newPassword, salt);
+
+            await UserService.updateUser(record.userId, { passwordHash });
+            await record.update({ usedAt: new Date() });
+
+            return res.status(200).json({ message: "Password reset successfully. You can now login with your new password." });
+        } catch (error) {
+            console.error("Reset password error:", error);
+            return res.status(500).json({ error: "Failed to reset password", details: error.message });
         }
     };
 }
