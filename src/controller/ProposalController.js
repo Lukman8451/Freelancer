@@ -1,6 +1,8 @@
 import ProposalService from "../service/concrete/ProposalService.js";
 import ProjectService from "../service/concrete/ProjectService.js";
 import ContractService from "../service/concrete/ContractService.js";
+import UserService from "../service/concrete/UserService.js";
+import EmailService from "../service/concrete/EmailService.js";
 import { sequelize } from "../model/index.js";
 
 class ProposalController {
@@ -47,6 +49,19 @@ class ProposalController {
             });
 
             await transaction.commit();
+
+            // Send emails (fire-and-forget)
+            const resolvedFreelancerId = freelancerId || req.user.id;
+            const [freelancer, client] = await Promise.all([
+                UserService.getUserById(resolvedFreelancerId),
+                UserService.getUserById(project.clientId)
+            ]);
+            if (freelancer) {
+                EmailService.sendProposalSubmittedEmail(freelancer.name, freelancer.email, project.title, bidAmount);
+            }
+            if (client) {
+                EmailService.sendNewProposalNotificationEmail(client.name, client.email, freelancer?.name || "A freelancer", project.title, bidAmount);
+            }
 
             return res.status(201).json({
                 message: "Proposal submitted successfully",
@@ -276,6 +291,12 @@ class ProposalController {
                     if (otherProposal.id !== id && otherProposal.status === "pending") {
                         await ProposalService.updateProposalStatus(otherProposal.id, "rejected");
                     }
+                }
+
+                // Notify freelancer their proposal was accepted (fire-and-forget)
+                const freelancer = await UserService.getUserById(proposal.freelancerId);
+                if (freelancer) {
+                    EmailService.sendProposalAcceptedEmail(freelancer.name, freelancer.email, project.title, proposal.bidAmount);
                 }
             }
 

@@ -65,6 +65,133 @@ class EmailService {
             console.error("Failed to send welcome email:", error.message);
         }
     };
+
+    sendProposalSubmittedEmail = async (freelancerName, freelancerEmail, projectTitle, bidAmount) => {
+        try {
+            const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Proposal Submitted!</h1>
+                </div>
+                <div style="background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
+                    <h2 style="color: #333;">Hi ${freelancerName},</h2>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                        Your proposal has been successfully submitted. The client will review it and get back to you.
+                    </p>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #333; margin-top: 0;">Proposal Details:</h3>
+                        <p style="color: #555; margin: 8px 0;"><strong>Project:</strong> ${projectTitle}</p>
+                        <p style="color: #555; margin: 8px 0;"><strong>Your Bid:</strong> $${bidAmount}</p>
+                        <p style="color: #555; margin: 8px 0;"><strong>Status:</strong> <span style="color: #f59e0b;">Pending Review</span></p>
+                    </div>
+                    <p style="color: #555; font-size: 14px; line-height: 1.6;">
+                        You will be notified by email once the client makes a decision on your proposal.
+                    </p>
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
+                    <p style="color: #999; font-size: 12px; text-align: center;">
+                        This email was sent by FreelanceHub.
+                    </p>
+                </div>
+            </div>`;
+
+            await this.transporter.sendMail({
+                from: env.SMTP_FROM,
+                to: freelancerEmail,
+                subject: `Proposal Submitted – ${projectTitle}`,
+                html
+            });
+
+            console.log(`Proposal submitted email sent to ${freelancerEmail}`);
+        } catch (error) {
+            console.error("Failed to send proposal submitted email:", error.message);
+        }
+    };
+
+    sendNewProposalNotificationEmail = async (clientName, clientEmail, freelancerName, projectTitle, bidAmount) => {
+        try {
+            const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">New Proposal Received!</h1>
+                </div>
+                <div style="background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
+                    <h2 style="color: #333;">Hi ${clientName},</h2>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                        You have received a new proposal for your project.
+                    </p>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #333; margin-top: 0;">Proposal Details:</h3>
+                        <p style="color: #555; margin: 8px 0;"><strong>Project:</strong> ${projectTitle}</p>
+                        <p style="color: #555; margin: 8px 0;"><strong>Freelancer:</strong> ${freelancerName}</p>
+                        <p style="color: #555; margin: 8px 0;"><strong>Bid Amount:</strong> $${bidAmount}</p>
+                    </div>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${env.SERVER_URL}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+                            Review Proposal
+                        </a>
+                    </div>
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
+                    <p style="color: #999; font-size: 12px; text-align: center;">
+                        This email was sent by FreelanceHub.
+                    </p>
+                </div>
+            </div>`;
+
+            await this.transporter.sendMail({
+                from: env.SMTP_FROM,
+                to: clientEmail,
+                subject: `New Proposal on "${projectTitle}"`,
+                html
+            });
+
+            console.log(`New proposal notification email sent to ${clientEmail}`);
+        } catch (error) {
+            console.error("Failed to send new proposal notification email:", error.message);
+        }
+    };
+
+    sendProposalAcceptedEmail = async (freelancerName, freelancerEmail, projectTitle, bidAmount) => {
+        try {
+            const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">🎉 Proposal Accepted!</h1>
+                </div>
+                <div style="background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
+                    <h2 style="color: #333;">Congratulations, ${freelancerName}!</h2>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                        Your proposal has been <strong style="color: #22c55e;">accepted</strong> by the client. A contract has been created automatically — you can now start working on the project.
+                    </p>
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #15803d; margin-top: 0;">Contract Details:</h3>
+                        <p style="color: #555; margin: 8px 0;"><strong>Project:</strong> ${projectTitle}</p>
+                        <p style="color: #555; margin: 8px 0;"><strong>Agreed Amount:</strong> $${bidAmount}</p>
+                        <p style="color: #555; margin: 8px 0;"><strong>Status:</strong> <span style="color: #22c55e;">Active</span></p>
+                    </div>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${env.SERVER_URL}" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+                            View Contract
+                        </a>
+                    </div>
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
+                    <p style="color: #999; font-size: 12px; text-align: center;">
+                        This email was sent by FreelanceHub.
+                    </p>
+                </div>
+            </div>`;
+
+            await this.transporter.sendMail({
+                from: env.SMTP_FROM,
+                to: freelancerEmail,
+                subject: `Your Proposal Was Accepted – ${projectTitle}`,
+                html
+            });
+
+            console.log(`Proposal accepted email sent to ${freelancerEmail}`);
+        } catch (error) {
+            console.error("Failed to send proposal accepted email:", error.message);
+        }
+    };
 }
 
 export default new EmailService();
